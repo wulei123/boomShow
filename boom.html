@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>炮弹轨迹</title>
+</head>
+<style type="text/css">
+    html, body {
+        margin: 0;
+        height: 100%;
+        width: 100%;
+        padding: 0;
+    }
+</style>
+<body>
+<img id="boomImg" style="display: none;" src="boom.png">
+<img id="boom1" style="display: none" src="1.png">
+<img id="boom2" style="display: none" src="2.png">
+<img id="boom3" style="display: none" src="3.png">
+<img id="boom4" style="display: none" src="4.png">
+<img id="boom5" style="display: none" src="5.png">
+<img id="boom6" style="display: none" src="6.png">
+<img id="boom7" style="display: none" src="7.png">
+<img id="boom8" style="display: none" src="8.png">
+<canvas id="cvs" style="background: url('bk.jpg'); background-position: bottom left"></canvas>
+<script>
+    /**
+     * Created by Administrator on 2016/7/15.
+     */
+    var WINDOW_HEIGHT = document.body.clientHeight;
+    var WINDOW_WIDTH = document.body.clientWidth;
+    var boom1 = document.getElementById("boom1");
+    var boom2 = document.getElementById("boom2");
+    var boom3 = document.getElementById("boom3");
+    var boom4 = document.getElementById("boom4");
+    var boom5 = document.getElementById("boom5");
+    var boom6 = document.getElementById("boom6");
+    var boom7 = document.getElementById("boom7");
+    var boom8 = document.getElementById("boom8");
+    var boomImg = document.getElementById("boomImg");
+    var setDate;
+    var paths = [];
+    var booming = [
+        boom1,
+        boom2,
+        boom3,
+        boom4,
+        boom5,
+        boom6,
+        boom7,
+        boom8
+    ];
+    window.onload = function () {
+        var cvs = document.getElementById("cvs");
+        cvs.height = WINDOW_HEIGHT;
+        cvs.width = WINDOW_WIDTH;
+        console.log(WINDOW_HEIGHT);
+        var cxt = cvs.getContext("2d");
+        // showBoom(100,100,cxt);
+        cvs.onmousedown = function (e) {
+            if (setDate) clearInterval(setDate);
+            paths = [];
+            e = e || event;
+            cxt.clearRect(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
+            var sx = 200;
+            var sy = WINDOW_HEIGHT-350;
+
+            cvs.onmousemove = function (e) {
+                cxt.clearRect(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
+                draw(sx, sy, e.pageX, e.pageY, cxt);
+                drawCircle(e.pageX, e.pageY, 4, cxt);
+            }
+            cvs.onmouseup = function (e) {
+                var vx = getV(e.pageX - sx);
+                var vy = getV(e.pageY - sy);
+                var x = sx;
+                var y = sy;
+                setDate = setInterval(
+                        function () {
+                            vx = updateVx(vx,0.05);
+                            x = updateX(x, vx);
+                            vy = updateVy(vy, 0.3);
+                            y = updateY(y, vy);
+                            console.log(vx, vy);
+                            if (y < WINDOW_HEIGHT - 100 && x < WINDOW_WIDTH - 100 && x > 0) {
+                                drawCircleEveryPath(x, y, 10, cxt);
+                                cxt.drawImage(boomImg, x, y);
+                                updatePath(x, y, cxt);
+
+                                //alert(y);
+                            } else {
+                                drawCircleEveryPath(x, y, 10, cxt);
+                                cxt.drawImage(boomImg, x, y);
+                                updatePath(x, y, cxt);
+                                showBoom(x, y, cxt);
+                                clearInterval(setDate);
+                            }
+
+
+                        }, 10
+                )
+
+
+                cvs.onmousemove = null;
+                cvs.onmouseup = null;
+            }
+
+
+            function draw(sx, sy, ex, ey, cxt) {
+                cxt.beginPath();
+                cxt.moveTo(sx, sy);
+                cxt.lineTo(ex, ey);
+                cxt.stroke();
+                cxt.strokeStyle = "red";
+                cxt.lineWidth = 5;
+            }
+
+
+        }
+
+
+        function drawCircle(cx, cy, r, cxt) {
+            cxt.beginPath();
+            cxt.arc(cx, cy, r, 0, 2 * Math.PI, true);
+            cxt.stroke();
+            cxt.fillStyle = "red";
+            cxt.fill();
+            cxt.lineWidth = 0;
+
+        }
+
+
+        function drawCircleEveryPath(cx, cy, r, cxt) {
+            cxt.clearRect(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
+            cxt.beginPath();
+            cxt.arc(cx, cy, r, 0, 2 * Math.PI, true);
+            cxt.lineWidth = 0;
+            cxt.strokeStyle = "white";
+            cxt.stroke();
+            cxt.fillStyle = "white";
+
+            cxt.fill();
+        }
+
+
+        function getV(x) {
+            return x / 20;
+        }
+
+
+        function updateX(x, vx) {
+            return x + vx;
+        }
+
+
+        function updateY(y, vy) {
+            return y + vy;
+        }
+
+
+        function updateVx(vx, a) {
+            if (vx > 0)
+                return vx - a > 0 ? vx - a : 0;
+            else
+                return vx + a < 0 ? vx + a : 0;
+        }
+
+
+        function updateVy(vy, a) {
+            return vy + a;
+        }
+
+
+        function updatePath(x, y, cxt) {
+            var path = {
+                x: x,
+                y: y,
+            }
+            paths.push(path);
+            for (var i = 0; i < paths.length; i++) {
+                drawCircle(paths[i].x, paths[i].y, 2, cxt);
+            }
+        }
+
+        function showBoom(x, y, cxt) {
+            var t = 0;
+            var stt = setInterval(function () {
+                //alert(t);
+                cxt.clearRect(x - 10, y - 13, x + 100, y + 100);
+                cxt.drawImage(booming[t], x - 10, y - 13, 150, 150);
+                t++;
+                if (t >= booming.length) {
+                    //alert("123");
+                    cxt.clearRect(x - 10, y - 13, x + 100, y + 100);
+                    clearInterval(stt);
+                    return false;
+                }
+            }, 100);
+
+        }
+
+    }
+</script>
+</body>
+</html>
